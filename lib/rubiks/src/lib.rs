@@ -1,5 +1,5 @@
 use rand::prelude::*;
-use std::fmt;
+use std::{collections::HashMap, fmt};
 
 /// Represents the Rubik's Cube and with mutating moves implmentations.
 #[derive(Debug, PartialEq, Eq)]
@@ -358,8 +358,30 @@ impl Cube {
         }
     }
 
+    pub fn as_face_list(&self) -> Vec<&Face> {
+        vec![&self.l, &self.f, &self.r, &self.b, &self.u, &self.d]
+    }
+
     /// Returns true if a valid cube state, false otherwise.
     pub fn validate_cube(&self) -> bool {
+        let mut colors: HashMap<&Color, usize> = HashMap::new();
+
+        for face in self.as_face_list() {
+            for color in face.as_list() {
+                if let Some(existing_v) = colors.get_mut(color) {
+                    *existing_v += 1;
+                } else {
+                    colors.insert(&color, 1);
+                }
+            }
+        }
+
+        for color in colors.values() {
+            if color > &9 {
+                return false;
+            }
+        }
+
         true
     }
 }
@@ -448,6 +470,13 @@ impl Face {
             self.b_l,
         );
     }
+
+    pub fn as_list(&self) -> Vec<&Color> {
+        vec![
+            &self.t_l, &self.t_m, &self.t_r, &self.m_l, &self.m_m, &self.m_r, &self.b_l, &self.b_m,
+            &self.b_r,
+        ]
+    }
 }
 
 impl fmt::Display for Face {
@@ -467,7 +496,7 @@ impl fmt::Display for Face {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum Color {
     Orange,
     Green,
